@@ -1,0 +1,21 @@
+RF
+Karen Julieth Artunduaga Cardenas
+El sistema debe habilitar el registro PARA LOS CLIENTES exclusivo por número de celular con validación vía SMS para agilizar el proceso de creación de cuenta
+El sistema debe bloquear temporalmente el acceso tras 3 intentos fallidos de inicio de sesión y mostrar advertencia para proteger la seguridad de la cuenta
+El sistema debe ofrecer opción de 'recordarme' en dispositivo para evitar ingreso repetido de datos, con restricción para equipos no públicos
+El sistema debe permitir marcar productos como 'agotados temporalmente' y mostrar fecha estimada de reabastecimiento en el catálogo
+El sistema debe enviar alertas automáticas cuando el stock de un producto baje de un límite configurado, para gestionar reposiciones a tiempo.
+
+Johan Esteban Gomez Cifuentes
+El sistema debe permitir crear paquetes combinados con precio especial y actualizar stock de componentes de forma automática al venderlos
+El sistema debe permitir a los usuarios categorizar sus PQR por tipo (queja, petición, reclamo) y adjuntar fotos o comprobantes para dar mayor claridad
+El sistema debe mostrar a los usuarios el estado de sus PQR en tiempo real y enviar notificaciones cuando haya una actualización o respuesta
+El sistema debe permitir al gerente asignar PQR a miembros del equipo y filtrarlos por categoría, estado o fecha de creación para gestionarlos mejor
+El sistema debe permitir guardar hasta 3 direcciones de entrega distintas y seleccionar la deseada para cada compra individual.
+
+Juan Andres Garzon Parra
+El sistema debe mostrar historial de compras con filtros por fechas o tipo de producto, además de permitir descargar comprobantes en PDF
+El sistema debe habilitar notificaciones personalizadas solo para descuentos de productos agregados a la lista de favoritos"
+El sistema debe permitir a los usuarios guardar productos en un carrito temporal y conservarlo por 24 horas incluso si cierra la sesión
+El sistema debe mostrar un resumen detallado del costo total antes de confirmar la compra, incluyendo impuestos, cargos de envío y descuentos aplicados
+El sistema debe habilitar la opción de compra 'para retiro en tienda' y generar un código de recogida único que se envía por mensaje de texto
