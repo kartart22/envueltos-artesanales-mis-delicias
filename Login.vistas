@@ -1,0 +1,266 @@
+import React, { useState, useEffect } from 'react';
+
+// ==========================================
+// 1. COMPONENTE: LOGIN (RF 1.1, 1.6, 1.8)
+// ==========================================
+const Login = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [intentosFallidos, setIntentosFallidos] = useState(0);
+  const [bloqueado, setBloqueado] = useState(false);
+  const [tiempoRestante, setTiempoRestante] = useState(60);
+
+  useEffect(() => {
+    let timer;
+    if (bloqueado && tiempoRestante > 0) {
+      timer = setInterval(() => setTiempoRestante((p) => p - 1), 1000);
+    } else if (tiempoRestante === 0) {
+      setBloqueado(false);
+      setIntentosFallidos(0);
+      setTiempoRestante(60);
+    }
+    return () => clearInterval(timer);
+  }, [bloqueado, tiempoRestante]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Todos los campos son obligatorios. (RF 1.8)');
+      return;
+    }
+
+    if (bloqueado) {
+      setError(`Cuenta bloqueada. Espera ${tiempoRestante} segundos.`);
+      return;
+    }
+
+    // Credenciales de prueba
+    if (email === "admin@envueltos.com" && password === "admin123") {
+      onLoginSuccess("Administrador");
+    } else {
+      const nuevosIntentos = intentosFallidos + 1;
+      setIntentosFallidos(nuevosIntentos);
+      if (nuevosIntentos >= 3) {
+        setBloqueado(true);
+        setError('Demasiados intentos fallidos. Cuenta bloqueada por 1 minuto. (RF 1.6)');
+      } else {
+        setError(`Credenciales incorrectas. Intentos restantes: ${3 - nuevosIntentos}`);
+      }
+    }
+  };
+
+  return (
+    <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 mx-auto mt-6">
+      <h2 className="text-xl font-bold text-center text-gray-800 mb-4">Iniciar Sesión</h2>
+      {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-xs text-center font-medium">{error}</div>}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600">Correo Electrónico</label>
+          <input type="email" disabled={bloqueado} value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-md text-sm" placeholder="admin@envueltos.com" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600">Contraseña</label>
+          <input type="password" disabled={bloqueado} value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-md text-sm" placeholder="admin123" />
+        </div>
+        <button type="submit" disabled={bloqueado} className={`w-full py-2 text-white text-sm font-medium rounded-md ${bloqueado ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          {bloqueado ? `Bloqueado (${tiempoRestante}s)` : 'Ingresar'}
+        </button>
+      </form>
+      <p className="text-xs text-center text-gray-400 mt-4">Pistas de prueba: admin@envueltos.com / admin123</p>
+    </div>
+  );
+};
+
+// ==========================================
+// 2. COMPONENTE: SOLICITAR RECUPERACIÓN (RF 1.4)
+// ==========================================
+const RecuperarPassword = () => {
+  const [email, setEmail] = useState('');
+  const [enviado, setEnviado] = useState(false);
+
+  return (
+    <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 mx-auto mt-6">
+      <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Recuperar Contraseña</h2>
+      {!enviado ? (
+        <form onSubmit={(e) => { e.preventDefault(); setEnviado(true); }} className="space-y-4">
+          <p className="text-xs text-gray-600 text-center">Se enviará un token seguro válido por 15 minutos (RI 1.4).</p>
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-3 py-2 border rounded-md text-sm" placeholder="Tu correo electrónico" />
+          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium">Enviar Enlace</button>
+        </form>
+      ) : (
+        <div className="bg-green-100 text-green-800 p-3 rounded text-xs text-center font-medium">Enlace enviado. Revisa tu bandeja de entrada.</div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// 3. COMPONENTE: CAMBIAR PASSWORD DESDE ENLACE (RF 1.4)
+// ==========================================
+const RestablecerPasswordForm = () => {
+  const [pass, setPass] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const handleUpdate = (e) => {
+    e.preventDefault();
+    if (pass !== confirm) { setMsg('Las contraseñas no coinciden.'); return; }
+    setMsg('¡Contraseña reestablecida! Se aplicará hashing BCrypt en la base de datos.');
+  };
+
+  return (
+    <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 mx-auto mt-6">
+      <h2 className="text-xl font-bold text-center text-gray-800 mb-4">Nuevo Password (Token Link)</h2>
+      {msg && <div className="bg-blue-100 text-blue-800 p-3 rounded mb-4 text-xs text-center font-medium">{msg}</div>}
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <input type="password" required placeholder="Nueva contraseña" value={pass} onChange={(e) => setPass(e.target.value)} className="w-full px-3 py-2 border rounded-md text-sm" />
+        <input type="password" required placeholder="Confirmar contraseña" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full px-3 py-2 border rounded-md text-sm" />
+        <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-md text-sm font-medium">Actualizar</button>
+      </form>
+    </div>
+  );
+};
+
+// ==========================================
+// 4. COMPONENTE: PERFIL DE USUARIO (RF 1.7)
+// ==========================================
+const PerfilUsuario = () => {
+  const [currentPass, setCurrentPass] = useState('');
+  const [msg, setMsg] = useState('');
+
+  return (
+    <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 mx-auto mt-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Mi Perfil</h2>
+      {msg && <div className="bg-blue-100 text-blue-800 p-3 rounded mb-4 text-xs text-center font-medium">{msg}</div>}
+      <form onSubmit={(e) => { e.preventDefault(); setMsg('Cambios guardados con éxito.'); setCurrentPass(''); }} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600">Nombre</label>
+          <input type="text" defaultValue="Juan Andrés" className="mt-1 w-full px-3 py-2 border rounded-md text-sm bg-gray-50" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600">Nueva Contraseña (Opcional)</label>
+          <input type="password" placeholder="Dejar en blanco si no cambia" className="mt-1 w-full px-3 py-2 border rounded-md text-sm" />
+        </div>
+        <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+          <label className="block text-xs font-medium text-yellow-800 mb-1">Contraseña Actual Requerida (RF 1.7)</label>
+          <input type="password" required value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm" placeholder="Ingresa tu clave actual" />
+        </div>
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium">Guardar Cambios</button>
+      </form>
+    </div>
+  );
+};
+
+// ==========================================
+// 5. MONITOR DE INACTIVIDAD (RF 1.5, RF 1.3)
+// ==========================================
+const MonitorInactividad = ({ userRole, onLogout }) => {
+  const [advertencia, setAdvertencia] = useState(false);
+  let tAdvertencia, tCierre;
+
+  const resetTimer = () => {
+    setAdvertencia(false);
+    clearTimeout(tAdvertencia);
+    clearTimeout(tCierre);
+
+    if (userRole) {
+      // Simulación rápida para testear en celular: 20s para aviso, 30s para logout definitivo
+      tAdvertencia = setTimeout(() => setAdvertencia(true), 20000); 
+      tCierre = setTimeout(() => { onLogout(); setAdvertencia(false); }, 30000);
+    }
+  };
+
+  useEffect(() => {
+    if (!userRole) return;
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('click', resetTimer);
+    window.addEventListener('keypress', resetTimer);
+    resetTimer();
+
+    return () => {
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      window.removeEventListener('keypress', resetTimer);
+      clearTimeout(tAdvertencia);
+      clearTimeout(tCierre);
+    };
+  }, [userRole]);
+
+  if (!advertencia) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+      <div className="bg-white p-5 rounded-lg max-w-xs w-full text-center shadow-xl">
+        <h3 className="text-base font-bold text-red-600">¿Sigues ahí, {userRole}?</h3>
+        <p className="text-xs text-gray-600 my-2">Tu sesión expirará pronto por inactividad (RF 1.5).</p>
+        <button onClick={resetTimer} className="mt-2 bg-blue-600 text-white px-4 py-2 rounded text-xs font-medium">Permanecer Conectado</button>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// APP PRINCIPAL: ORQUESTADOR DE VISTAS
+// ==========================================
+export default function App() {
+  const [vistaActual, setVistaActual] = useState('login');
+  const [rolUsuario, setRolUsuario] = useState(null); // Estado global de sesión
+
+  const handleLogin = (rol) => {
+    setRolUsuario(rol);
+    setVistaActual('perfil'); // Al loguearse redirige a perfil
+  };
+
+  const handleLogout = () => {
+    setRolUsuario(null);
+    setVistaActual('login'); // RF 1.3 Cierre seguro
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 font-sans p-4 pb-12">
+      {/* MONITOR ACTIVO GLOBALMENTE */}
+      <MonitorInactividad userRole={rolUsuario} onLogout={handleLogout} />
+
+      {/* CABECERA */}
+      <header className="max-w-md mx-auto text-center my-4">
+        <h1 className="text-xl font-black text-gray-800">Fábrica de Envueltos</h1>
+        <p className="text-xs text-gray-500">Módulo 1: Login & Seguridad</p>
+        
+        {rolUsuario && (
+          <div className="mt-2 bg-green-50 border border-green-200 text-green-700 px-3 py-1 rounded-full text-xs inline-block font-semibold">
+            Sesión Activa: {rolUsuario}
+          </div>
+        )}
+      </header>
+
+      {/* MENÚ DE NAVEGACIÓN TEMPORAL (Para probar en celular fácilmente) */}
+      <nav className="max-w-md mx-auto bg-white p-2 rounded-lg shadow-sm flex flex-wrap justify-center gap-1 mb-4 text-xs font-medium">
+        <button onClick={() => setVistaActual('login')} className={`px-2 py-1 rounded ${vistaActual === 'login' ? 'bg-blue-600 text-white' : 'text-gray-600 bg-gray-50'}`}>1. Login</button>
+        <button onClick={() => setVistaActual('recuperar')} className={`px-2 py-1 rounded ${vistaActual === 'recuperar' ? 'bg-blue-600 text-white' : 'text-gray-600 bg-gray-50'}`}>2. Olvidé Clave</button>
+        <button onClick={() => setVistaActual('token')} className={`px-2 py-1 rounded ${vistaActual === 'token' ? 'bg-blue-600 text-white' : 'text-gray-600 bg-gray-50'}`}>3. Reset Link</button>
+        <button onClick={() => setVistaActual('perfil')} className={`px-2 py-1 rounded ${vistaActual === 'perfil' ? 'bg-blue-600 text-white' : 'text-gray-600 bg-gray-50'}`}>4. Perfil</button>
+        {rolUsuario && (
+          <button onClick={handleLogout} className="px-2 py-1 rounded bg-red-100 text-red-600 font-bold ml-auto">Salir (RF 1.3)</button>
+        )}
+      </nav>
+
+      {/* RENDERIZADO CONDICIONAL DE VISTAS */}
+      <main className="px-2">
+        {vistaActual === 'login' && <Login onLoginSuccess={handleLogin} />}
+        {vistaActual === 'recuperar' && <RecuperarPassword />}
+        {vistaActual === 'token' && <RestablecerPasswordForm />}
+        {vistaActual === 'perfil' && <PerfilUsuario />}
+      </main>
+
+      {/* AVISO DEL BOTÓN DE INACTIVIDAD */}
+      {rolUsuario && (
+        <p className="text-[10px] text-center text-gray-400 mt-6 max-w-xs mx-auto">
+        </p>
+      )}
+    </div>
+  );
+}
